@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+  <head>
+    <title>ETC5543 Presentation</title>
+    <meta charset="utf-8" />
+    <meta name="author" content="Jinhao Luo" />
+    <meta name="author" content="Student ID: 29012449" />
+    <meta name="date" content="2022-06-23" />
+    <script src="ETC5543_MSToolkit_Presentation_files/header-attrs/header-attrs.js"></script>
+    <script src="ETC5543_MSToolkit_Presentation_files/kePrint/kePrint.js"></script>
+    <link href="ETC5543_MSToolkit_Presentation_files/lightable/lightable.css" rel="stylesheet" />
+    <link rel="stylesheet" href="xaringan-themer.css" type="text/css" />
+  </head>
+  <body>
+    <textarea id="source">
+class: center, middle, inverse, title-slide
+
+.title[
+# ETC5543 Presentation
+]
+.subtitle[
+## The MSToolkit R Package Development
+]
+.author[
+### Jinhao Luo
+]
+.author[
+### Student ID: 29012449
+]
+.date[
+### 2022-06-23
+]
+
+---
+
+
+
+
+
+
+## Aims
+
+1. Updating the documentation using `{roxygen2}` format.
+
+2. Converting unit test cases to `{testthat}` framework.
+
+3. Writing the vignette for the `MSToolkit` package.
+
+4. Using the `{pkgdown}` to build the website for the package. 
+
+???
+
+MSToolkit was developed by my supervisor with a consultancy group around 12 years ago.  When it was developed, the package development tools like testthat, usethis, pkgdown didn’t exist. Therefore, we are planning to modernise the MSToolkit package. In my internship, I was required to update the documentation using roxygen2 format. Meanwhile, I need to convert the unit test cases to testthat framework. Besides, I also need to write the vignette, as well as using the pkgdown package to build the package website for MSToolkit.
+
+--
+
+## Motivations
+
+* Assist me to apply my knowledge to a real and challenging jobs, as well as practice my learning.
+
+* It could help me to discover the shortcomings and improve my ability to solve complex R problems. 
+
+* Updating the `MSToolkit` package and providing it to more users. 
+
+
+???
+
+In my opinion, developing the MSToolkit package as my internship could help me apply my knowledge to a real and challenging jobs, as well as practice my learning. In addition, it could also help me discover the shortcomings and improve my ability to solve complex R problems, especially the R package problems. Furthermore, MSToolkit package is a practical clinical trial simulation package because it was designed for the internal usage in Pfizer as the beginning and I also hope to help my supervisor to update this package and provide it to more users. 
+
+---
+
+## What is the MSToolkit R package 
+
+* Created based on the concept of clinical trial simulation (CTS). 
+
+* To help users simulate the clinical trial data.
+
+* To help users analyse the simulated data.
+
+* To help users quantify operating characteristics
+
+
+![Logo](pic/logo.jpg)
+
+???
+
+So, what is the MSToolkit R package. The MSToolkit package was created based on the theory of clinical trial simulation. It could help users simulate the clinical trial data. After the data was simulated, the MSToolkit package could be apply to analyse the datsets , as well as quantify the operating characteristics through the application of dose and study level decision criteria.
+
+---
+
+&lt;style type="text/css"&gt;
+table {
+  font-size: 14px;
+}
+&lt;/style&gt;
+
+
+## Two main functions
+
+### 1. `generateData()` function
+
+The `generateData()` is a high-level function comprises a suite of low-level functions which are used to generate trial data. The following functions are the low-level functions which called to create sets of the simulated trial data: 
+
+|Low-level Function|Description|
+|:-----------------|-----------|
+|`createTreatments(...)`|Creates a dataset of all possible treatment regimes to be allocated to subjects|
+|`allocateTreatments(...)`|Allocates treatments to subjects in the simulated study|
+|`createCovariates(...)`| Creates a set of fixed covariates for a simulated population|
+|`createParameters(...)`| Creates simulated fixed and between subject parameters for subjects in each replicate|
+|`createResponse(...)`| Creates a simulated response variable based on available derived data|
+|`createMCAR(...)`| Adds a simulated “missing” flag to the data|
+|`createDropout(...)`| Adds a simulated “missing” flag to the data based on a dropout function|
+|`createInterims(...)`| Assigns subjects in the study to interim analyses|
+|`createDirectories(...)`| creates ReplicateData directory under the current working directory|
+|`writeData(...)`|Which writes out the simulation replicate data in CSV|
+
+
+???
+
+As mentioned above, the MSToolkit mainly focuses on simulating and analysing the data. Therefore, there are two main functions in the package to achieve the goals. The first one called genearteData. The generateData is a high-level function comprises a suite of low-level functions which are used to generate trial data. The table below shows the low level functions.
+
+---
+
+## Two main functions
+
+### 1. `generateData()` function
+
+The arguments of `generateData()` function are shown below: 
+
+
+```r
+generateData(
+  replicateN,                                   # Required argument
+  subjects = NULL,                              # Required argument
+  treatSubj = subjects,
+  treatDoses,                                   # Required argument
+  treatSeq,
+  treatType = "Parallel",
+  treatPeriod,
+  genParNames,
+  genParMean,
+  genParVCov = 0,
+  respEqn,                                      # Required argument
+  respName = getEctdColName("Response"),
+  treatProp,
+  treatOrder = FALSE,
+  ...
+)
+```
+
+All the inputted arguments in the `generateData()` function would be passed to the low-level functions, and then simulating sets of the trial data. 
+
+You could find more details in the [function documentation](https://jluo0015.github.io/MSToolkit/reference/generateData.html) or the [introduction article](https://jluo0015.github.io/MSToolkit/articles/generate_data.html) of the `generateData()` function.
+
+???
+
+The arguments of the generateData shows below, when we input the arguments into the generateData function, the inputted argument would be passed to the low level functions shown before and then simulate the trial data. 
+
+---
+
+&lt;style type="text/css"&gt;
+table {
+  font-size: 16px;
+}
+&lt;/style&gt;
+
+## Two main functions
+
+### 1. `generateData()` function (Example)
+
+.pull-left[
+
+
+```r
+library(MSToolkit)
+
+generateData(replicateN = 1, 
+             subjects=200, 
+             treatSubj = rep(100,2), 
+             treatDoses = c(0,100),  
+             genParNames = "ALPHA, BETA", 
+             genParMean = c(0,1), 
+             genParVCov=0,  
+             respEqn = "ALPHA+BETA*DOSE",  
+             respVCov = 1,  
+             seed=12345)
+```
+
+&lt;div style = "font-size:16px"&gt;
+
+* 1 replicate of 200 subjects. (`replicateN`, `subjects`)
+* Split equally across the two treatment arms. (`treatSubj`)
+* Assign treatment doses as 0 and 100. (`treatDoses`)
+* Assign parameters as ALPHA and BETA, and the mean for ALPHA is 0 and the mean for BETA is 1. (`genParNames`, `genParMean`)
+* The simulation formula is _ALPHA+BETA*DOSE_. (`respEqn`)
+* Specify the covariance matrix for generating fixed parameters as 0. (`genParVCov`)
+* Specify the residual variability as 1. (`respVCov`)]
+
+&lt;/div&gt;
+
+
+.pull-right[
+
+&lt;table class="table" style="margin-left: auto; margin-right: auto;"&gt;
+&lt;caption&gt;The first 10 rows of the simulatd trials data&lt;/caption&gt;
+ &lt;thead&gt;
+  &lt;tr&gt;
+   &lt;th style="text-align:right;"&gt; SUBJ &lt;/th&gt;
+   &lt;th style="text-align:right;"&gt; TRT &lt;/th&gt;
+   &lt;th style="text-align:right;"&gt; DOSE &lt;/th&gt;
+   &lt;th style="text-align:right;"&gt; ALPHA &lt;/th&gt;
+   &lt;th style="text-align:right;"&gt; BETA &lt;/th&gt;
+   &lt;th style="text-align:right;"&gt; PAROMIT &lt;/th&gt;
+   &lt;th style="text-align:right;"&gt; RESP &lt;/th&gt;
+   &lt;th style="text-align:right;"&gt; RESPOMIT &lt;/th&gt;
+  &lt;/tr&gt;
+ &lt;/thead&gt;
+&lt;tbody&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:right;"&gt; 1 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 1 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 1 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0.452 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:right;"&gt; 2 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 1 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 1 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; -0.632 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:right;"&gt; 3 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 1 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 1 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0.357 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:right;"&gt; 4 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 2 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 100 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 1 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 99.753 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:right;"&gt; 5 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 2 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 100 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 1 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 100.251 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:right;"&gt; 6 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 2 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 100 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 1 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 99.732 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:right;"&gt; 7 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 1 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 1 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0.045 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:right;"&gt; 8 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 2 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 100 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 1 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 101.133 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:right;"&gt; 9 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 2 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 100 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 1 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 101.195 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:right;"&gt; 10 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 1 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 1 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0.155 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0 &lt;/td&gt;
+  &lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+]
+
+
+???
+
+The example here shows how the generateData function works. In here, we create 1 replicate of 200 subjects. We split equally across the two treatment arms, therefore, we could see the value in the TRT column in the result is only 1 or 2. Besides, we assigned the treatment doses as 0 and 100, we could check the result in the dose column in the table on the right hand side. 
+
+---
+
+## Two main functions
+
+### 2. `analyzeData()` function
+
+The `analyzeData()` function wraps functions together for performing user-specified analysis on the replicate datasets and also performing micro and macro level summaries of the analysis results. 
+
+
+```r
+analyzeData(
+  replicates = "*", 
+  analysisCode,                                  # Required
+  macroCode,                                     # Required
+  interimCode = NULL, 
+  software = "R", 
+  grid = FALSE, 
+  waitAndCombine = TRUE, 
+  cleanUp = FALSE, 
+  removeMissing = TRUE, 
+  removeParOmit = TRUE, 
+  removeRespOmit = TRUE, 
+  seed = .deriveFromMasterSeed(), 
+  parOmitFlag = getEctdColName("ParOmit"), 
+  respOmitFlag = getEctdColName("RespOmit"), 
+  missingFlag = getEctdColName("Missing"), 
+  interimCol = getEctdColName("Interim"),
+  doseCol = getEctdColName("Dose"), 
+  sleepTime = 15, 
+  deleteCurrData = TRUE, 
+  initialDoses = NULL, 
+  stayDropped = TRUE, 
+  fullAnalysis = TRUE, 
+  workingPath = getwd(), 
+  method = getEctdDataMethod())
+```
+
+???
+
+Another main function called analyzeData. This analyzeData function wraps together functions for performing user-specified analysis on the replicate datasets and also performing micro- and macro- level summaries of the analysis results. The arguments of the analyzeData function shown below. 
+
+---
+## Two main functions
+
+### 2. `analyzeData()` function
+
+#### Three important user-specified analysis functions
+
+1. *analysisCode* - Performs the basic analysis and returns the analysis output for later micro and macro analysis.
+
+2. *interimCode* - Specifies a rule to determine whether dropping doses or terminating treatments at interim analysis.
+
+3. *macroCode *- Provides a single assessment of the success or failure of a trial at the conclusion of the trial.
+
+You could find more details in the [introduction article](https://jluo0015.github.io/MSToolkit/articles/analyze_data.html) of `analyzeData()` function.
+
+???
+
+In the analyzeData function, there are three analysis functions required the user to specify before use the analyzeData function. The first one is the analysiscode. It performs the basic analysis and returns the output which is used later in the micro evaluation or macro evaluation. The second one is interimcode. It summarises the analytic method at the dose or treatment level. The last one is the macrocode. It summarises the analytic method at a study level, It applies a user-specified rule to determine success or failure of the trial for assessing the operating characteristics of the trial.
+
+---
+## My main jobs in developing the `MSToolkit` package
+
+### 1. Converting the unit test cases by {testthat}
+
+The unit test was converted from the [{`RUnit`}](https://cran.r-project.org/web/packages/RUnit/vignettes/RUnit.pdf) package to the {`testthat`} package.
+
+|`RUnit`|converted to|`testthat`|
+|:-----:|:----------:|:--------:|
+|`checkException`| -&gt;|`expect_error`|
+|`checkTrue`| -&gt;|`expect_true` &lt;br/&gt; `expect_false`|
+|`checkEqual`|-&gt;|`expect_equal`|
+
+
+.footnote[Source: https://cran.r-project.org/web/packages/RUnit/vignettes/RUnit.pdf]
+
+???
+
+Besides introducing the MSToolkit package itself, I also want to explain what I have done in the internship. I chose three main jobs here. The first one is I converting the unit test cases by the testthat package. In the older version, the package used the RUnit framework to test the function. In the process of updating the package, the testthat framework was applied to replace the older framework. For example, we used expect_error in the testthat to replace the checkException in the RUnit. 
+
+---
+## My main jobs in developing the `MSToolkit` package
+
+### 2. Creating the vignette of MSToolkit package
+
+The vignette is designed for helping users understand the main features of the package and how to use the package. It mainly focuses on those two important functions - `generatedData` and `analyzeData`.
+
+* Displays 9 examples of different models for `generateData` function.
+
+* Displays a completed process of `analyzeData` function, including the `analysisCode`, `macroCode` and `interimCode`, as well as the trial design and the data simulation process.
+
+* The guideline of troubleshooting the analysis code.
+
+You could check the whole vignette in  [here](https://jluo0015.github.io/MSToolkit/articles/MSToolkit_intro_vig.html).
+
+
+???
+
+In addition, I also created the vignette for the MSToolkit package. The vignette explains the main feature of the package, also guides users how to use the package. In order to explain the two main functions, the vignette provides 9 examples of different models for generateData function, as well as displays a completed process of analyzeData function, including the analysisCode, macroCode and interimCode, as well as the trial design and the data simulation process.
+
+---
+## My main jobs in developing the `MSToolkit` package
+
+### 3. Creating the package website by {pkgdown}
+
+A new package website was recreated by the `{pkgdown}` package to display the related information of `MSToolkit` package. There are five parts in the new package website:
+
+1. [home page](https://jluo0015.github.io/MSToolkit/) - displays the basic information of `MSToolkit`.
+
+2. [Get Started](https://jluo0015.github.io/MSToolkit/articles/MSToolkit_intro_vig.html) - contains the vignette of `MSToolkit`.
+
+3. [Reference](https://jluo0015.github.io/MSToolkit/reference/index.html) - displays all the functions.
+
+4. Articles - 4 articles
+  + [generateData](https://jluo0015.github.io/MSToolkit/articles/generate_data.html) - explains the `generateData` function. 
+  + [analyzeData](https://jluo0015.github.io/MSToolkit/articles/analyze_data.html) - explains the `analyzeData` function.
+  + [Simulation Overview](https://jluo0015.github.io/MSToolkit/articles/simulation_overview.html) - explains the clinical trial simulation theory which applied in the R package.
+  + [References](https://jluo0015.github.io/MSToolkit/articles/references.html) - contains the reference list of this R package. 
+  
+5. [Changelog](https://jluo0015.github.io/MSToolkit/news/index.html) - shows the development status of the *MSToolkit* package.
+
+
+???
+
+Furthermore, I also used the pkgdown package to create a new package website. The website contains five parts. The home page displays the basic information of MSToolkit. While the get started page contains the vignette of the package. The references page is used to display all the functions of MSToolkit. Regarding the Articles page, there are four articles which provides more details about those two main functions, as well as explains the simulation principle and also contains the reference list of the package. The last page is changelog which shows the development status of the MSToolkit package. 
+
+---
+## Conclusions
+
+* Modernising the `MSToolkit` R package by applying `{roxygen2}`, `{usethis}`, `{testthat}`, `{pkgdown}` 
+
+* It is a good opportunity to apply and practice our knowledge.
+
+* It provides a chance to learn new knowledge/applications during the development process. 
+
+
+???
+
+In conclusion, during the internship, I moderised the MSToolkit package by applying the package development tools like the roxygen2, usethis, testthat, and pkgdown. During the development of the package, it provides me an opportunity to apply and practice my knowledge. It also provides me a chance to learn new knowledge and applications, and that would improve my skills of solving the R problems, and it would be helpful for my future career.
+
+---
+
+class: center, middle
+
+# Thank you!
+
+
+---
+
+## References
+
+Garrick Aden-Buie (2021). xaringanthemer: Custom 'xaringan' CSS Themes. R package version
+  0.4.1. https://CRAN.R-project.org/package=xaringanthemer
+  
+Hao Zhu (2021). kableExtra: Construct Complex Table with 'kable' and Pipe Syntax. R
+  package version 1.3.4. https://CRAN.R-project.org/package=kableExtra
+  
+Kirill Müller (2020). here: A Simpler Way to Find Your Files. R package version 1.0.1.
+  https://CRAN.R-project.org/package=here
+  
+Mike K Smith (2016). MSToolkit: The MSToolkit library for clinical trial design. R package
+  version 3.2.4.
+
+The documentation of RUnit package. https://cran.r-project.org/web/packages/RUnit/vignettes/RUnit.pdf
+    </textarea>
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script>var slideshow = remark.create({
+"slideNumberFormat": "%current%",
+"highlightStyle": "github",
+"highlightLines": true,
+"ratio": "16:9",
+"countIncrementalSlides": true
+});
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();
+// add `data-at-shortcutkeys` attribute to <body> to resolve conflicts with JAWS
+// screen reader (see PR #262)
+(function(d) {
+  let res = {};
+  d.querySelectorAll('.remark-help-content table tr').forEach(tr => {
+    const t = tr.querySelector('td:nth-child(2)').innerText;
+    tr.querySelectorAll('td:first-child .key').forEach(key => {
+      const k = key.innerText;
+      if (/^[a-z]$/.test(k)) res[k] = t;  // must be a single letter (key)
+    });
+  });
+  d.body.setAttribute('data-at-shortcutkeys', JSON.stringify(res));
+})(document);
+(function() {
+  "use strict"
+  // Replace <script> tags in slides area to make them executable
+  var scripts = document.querySelectorAll(
+    '.remark-slides-area .remark-slide-container script'
+  );
+  if (!scripts.length) return;
+  for (var i = 0; i < scripts.length; i++) {
+    var s = document.createElement('script');
+    var code = document.createTextNode(scripts[i].textContent);
+    s.appendChild(code);
+    var scriptAttrs = scripts[i].attributes;
+    for (var j = 0; j < scriptAttrs.length; j++) {
+      s.setAttribute(scriptAttrs[j].name, scriptAttrs[j].value);
+    }
+    scripts[i].parentElement.replaceChild(s, scripts[i]);
+  }
+})();
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();
+// adds .remark-code-has-line-highlighted class to <pre> parent elements
+// of code chunks containing highlighted lines with class .remark-code-line-highlighted
+(function(d) {
+  const hlines = d.querySelectorAll('.remark-code-line-highlighted');
+  const preParents = [];
+  const findPreParent = function(line, p = 0) {
+    if (p > 1) return null; // traverse up no further than grandparent
+    const el = line.parentElement;
+    return el.tagName === "PRE" ? el : findPreParent(el, ++p);
+  };
+
+  for (let line of hlines) {
+    let pre = findPreParent(line);
+    if (pre && !preParents.includes(pre)) preParents.push(pre);
+  }
+  preParents.forEach(p => p.classList.add("remark-code-has-line-highlighted"));
+})(document);</script>
+
+<script>
+slideshow._releaseMath = function(el) {
+  var i, text, code, codes = el.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+};
+slideshow._releaseMath(document);
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>
