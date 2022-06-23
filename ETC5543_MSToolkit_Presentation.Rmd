@@ -1,0 +1,365 @@
+---
+title: "ETC5543 Presentation"
+subtitle: "The MSToolkit R Package Development"  
+author: 
+  - "Jinhao Luo"
+  - "Student ID: 29012449"
+date: '`r Sys.Date()`'
+output:
+  xaringan::moon_reader:
+    css: xaringan-themer.css
+    nature:
+      slideNumberFormat: "%current%"
+      highlightStyle: github
+      highlightLines: true
+      ratio: 16:9
+      countIncrementalSlides: true
+---
+
+```{r setup, include=FALSE}
+options(htmltools.dir.version = FALSE)
+knitr::opts_chunk$set(
+  fig.width=9, fig.height=3.5, fig.retina=3,
+  out.width = 250,
+  out.height = 300,
+  cache = FALSE,
+  echo = TRUE,
+  message = FALSE, 
+  warning = FALSE,
+  hiline = TRUE
+)
+```
+
+```{r xaringan-themer, include=FALSE, warning=FALSE}
+library(xaringanthemer)
+style_duo_accent(
+  primary_color = "#FFFFFF",
+  secondary_color = "#FF961C",
+  inverse_header_color = "#FFFFFF",
+  header_color = "#000000",
+  code_inline_color = "#000000",
+  code_font_size = "11px",
+  link_color = "#FF961C",
+  text_slide_number_color = "#000000"
+)
+```
+
+## Aims
+
+1. Updating the documentation using `{roxygen2}` format.
+
+2. Converting unit test cases to `{testthat}` framework.
+
+3. Writing the vignette for the `MSToolkit` package.
+
+4. Using the `{pkgdown}` to build the website for the package. 
+
+???
+
+MSToolkit was developed by my supervisor with a consultancy group around 12 years ago.  When it was developed, the package development tools like testthat, usethis, pkgdown didn’t exist. Therefore, we are planning to modernise the MSToolkit package. In my internship, I was required to update the documentation using roxygen2 format. Meanwhile, I need to convert the unit test cases to testthat framework. Besides, I also need to write the vignette, as well as using the pkgdown package to build the package website for MSToolkit.
+
+--
+
+## Motivations
+
+* Assist me to apply my knowledge to a real and challenging jobs, as well as practice my learning.
+
+* It could help me to discover the shortcomings and improve my ability to solve complex R problems. 
+
+* Updating the `MSToolkit` package and providing it to more users. 
+
+
+???
+
+In my opinion, developing the MSToolkit package as my internship could help me apply my knowledge to a real and challenging jobs, as well as practice my learning. In addition, it could also help me discover the shortcomings and improve my ability to solve complex R problems, especially the R package problems. Furthermore, MSToolkit package is a practical clinical trial simulation package because it was designed for the internal usage in Pfizer as the beginning and I also hope to help my supervisor to update this package and provide it to more users. 
+
+---
+
+## What is the MSToolkit R package 
+
+* Created based on the concept of clinical trial simulation (CTS). 
+
+* To help users simulate the clinical trial data.
+
+* To help users analyse the simulated data.
+
+* To help users quantify operating characteristics
+
+
+![Logo](pic/logo.jpg)
+
+???
+
+So, what is the MSToolkit R package. The MSToolkit package was created based on the theory of clinical trial simulation. It could help users simulate the clinical trial data. After the data was simulated, the MSToolkit package could be apply to analyse the datsets , as well as quantify the operating characteristics through the application of dose and study level decision criteria.
+
+---
+
+```{css, echo=FALSE}
+table {
+  font-size: 14px;
+}
+```
+
+
+## Two main functions
+
+### 1. `generateData()` function
+
+The `generateData()` is a high-level function comprises a suite of low-level functions which are used to generate trial data. The following functions are the low-level functions which called to create sets of the simulated trial data: 
+
+|Low-level Function|Description|
+|:-----------------|-----------|
+|`createTreatments(...)`|Creates a dataset of all possible treatment regimes to be allocated to subjects|
+|`allocateTreatments(...)`|Allocates treatments to subjects in the simulated study|
+|`createCovariates(...)`| Creates a set of fixed covariates for a simulated population|
+|`createParameters(...)`| Creates simulated fixed and between subject parameters for subjects in each replicate|
+|`createResponse(...)`| Creates a simulated response variable based on available derived data|
+|`createMCAR(...)`| Adds a simulated “missing” flag to the data|
+|`createDropout(...)`| Adds a simulated “missing” flag to the data based on a dropout function|
+|`createInterims(...)`| Assigns subjects in the study to interim analyses|
+|`createDirectories(...)`| creates ReplicateData directory under the current working directory|
+|`writeData(...)`|Which writes out the simulation replicate data in CSV|
+
+
+???
+
+As mentioned above, the MSToolkit mainly focuses on simulating and analysing the data. Therefore, there are two main functions in the package to achieve the goals. The first one called genearteData. The generateData is a high-level function comprises a suite of low-level functions which are used to generate trial data. The table below shows the low level functions.
+
+---
+
+## Two main functions
+
+### 1. `generateData()` function
+
+The arguments of `generateData()` function are shown below: 
+
+```{r generate-data, echo=TRUE,eval=FALSE}
+generateData(
+  replicateN,                                   # Required argument
+  subjects = NULL,                              # Required argument
+  treatSubj = subjects,
+  treatDoses,                                   # Required argument
+  treatSeq,
+  treatType = "Parallel",
+  treatPeriod,
+  genParNames,
+  genParMean,
+  genParVCov = 0,
+  respEqn,                                      # Required argument
+  respName = getEctdColName("Response"),
+  treatProp,
+  treatOrder = FALSE,
+  ...
+)
+```
+
+All the inputted arguments in the `generateData()` function would be passed to the low-level functions, and then simulating sets of the trial data. 
+
+You could find more details in the [function documentation](https://jluo0015.github.io/MSToolkit/reference/generateData.html) or the [introduction article](https://jluo0015.github.io/MSToolkit/articles/generate_data.html) of the `generateData()` function.
+
+???
+
+The arguments of the generateData shows below, when we input the arguments into the generateData function, the inputted argument would be passed to the low level functions shown before and then simulate the trial data. 
+
+---
+
+```{css, echo=FALSE}
+table {
+  font-size: 16px;
+}
+```
+
+## Two main functions
+
+### 1. `generateData()` function (Example)
+
+.pull-left[
+
+```{r generate-data-example, eval=FALSE}
+library(MSToolkit)
+
+generateData(replicateN = 1, 
+             subjects=200, 
+             treatSubj = rep(100,2), 
+             treatDoses = c(0,100),  
+             genParNames = "ALPHA, BETA", 
+             genParMean = c(0,1), 
+             genParVCov=0,  
+             respEqn = "ALPHA+BETA*DOSE",  
+             respVCov = 1,  
+             seed=12345)
+```
+
+<div style = "font-size:16px">
+
+* 1 replicate of 200 subjects. (`replicateN`, `subjects`)
+* Split equally across the two treatment arms. (`treatSubj`)
+* Assign treatment doses as 0 and 100. (`treatDoses`)
+* Assign parameters as ALPHA and BETA, and the mean for ALPHA is 0 and the mean for BETA is 1. (`genParNames`, `genParMean`)
+* The simulation formula is _ALPHA+BETA*DOSE_. (`respEqn`)
+* Specify the covariance matrix for generating fixed parameters as 0. (`genParVCov`)
+* Specify the residual variability as 1. (`respVCov`)]
+
+</div>
+
+
+.pull-right[
+
+```{r show-example, echo=FALSE}
+library(kableExtra)
+data <- read.csv(here::here("ReplicateData/replicate0001.csv"))
+
+data %>%
+  head(10) %>% 
+  kable(caption = "The first 10 rows of the simulatd trials data") %>%
+  kable_styling()
+  
+```
+]
+
+
+???
+
+The example here shows how the generateData function works. In here, we create 1 replicate of 200 subjects. We split equally across the two treatment arms, therefore, we could see the value in the TRT column in the result is only 1 or 2. Besides, we assigned the treatment doses as 0 and 100, we could check the result in the dose column in the table on the right hand side. 
+
+---
+
+## Two main functions
+
+### 2. `analyzeData()` function
+
+The `analyzeData()` function wraps functions together for performing user-specified analysis on the replicate datasets and also performing micro and macro level summaries of the analysis results. 
+
+```{r analyze-data-code, eval=FALSE}
+analyzeData(
+  replicates = "*", 
+  analysisCode,                                  # Required
+  macroCode,                                     # Required
+  interimCode = NULL, 
+  software = "R", 
+  grid = FALSE, 
+  waitAndCombine = TRUE, 
+  cleanUp = FALSE, 
+  removeMissing = TRUE, 
+  removeParOmit = TRUE, 
+  removeRespOmit = TRUE, 
+  seed = .deriveFromMasterSeed(), 
+  parOmitFlag = getEctdColName("ParOmit"), 
+  respOmitFlag = getEctdColName("RespOmit"), 
+  missingFlag = getEctdColName("Missing"), 
+  interimCol = getEctdColName("Interim"),
+  doseCol = getEctdColName("Dose"), 
+  sleepTime = 15, 
+  deleteCurrData = TRUE, 
+  initialDoses = NULL, 
+  stayDropped = TRUE, 
+  fullAnalysis = TRUE, 
+  workingPath = getwd(), 
+  method = getEctdDataMethod())
+```
+
+???
+
+Another main function called analyzeData. This analyzeData function wraps together functions for performing user-specified analysis on the replicate datasets and also performing micro- and macro- level summaries of the analysis results. The arguments of the analyzeData function shown below. 
+
+---
+## Two main functions
+
+### 2. `analyzeData()` function
+
+#### Three important user-specified analysis functions
+
+1. *analysisCode* - Performs the basic analysis and returns the analysis output for later micro and macro analysis.
+
+2. *interimCode* - Specifies a rule to determine whether dropping doses or terminating treatments at interim analysis.
+
+3. *macroCode *- Provides a single assessment of the success or failure of a trial at the conclusion of the trial.
+
+You could find more details in the [introduction article](https://jluo0015.github.io/MSToolkit/articles/analyze_data.html) of `analyzeData()` function.
+
+???
+
+In the analyzeData function, there are three analysis functions required the user to specify before use the analyzeData function. The first one is the analysiscode. It performs the basic analysis and returns the output which is used later in the micro evaluation or macro evaluation. The second one is interimcode. It summarises the analytic method at the dose or treatment level. The last one is the macrocode. It summarises the analytic method at a study level, It applies a user-specified rule to determine success or failure of the trial for assessing the operating characteristics of the trial.
+
+---
+## My main jobs in developing the `MSToolkit` package
+
+### 1. Converting the unit test cases by {testthat}
+
+The unit test was converted from the [{`RUnit`}](https://cran.r-project.org/web/packages/RUnit/vignettes/RUnit.pdf) package to the {`testthat`} package.
+
+|`RUnit`|converted to|`testthat`|
+|:-----:|:----------:|:--------:|
+|`checkException`| ->|`expect_error`|
+|`checkTrue`| ->|`expect_true` <br/> `expect_false`|
+|`checkEqual`|->|`expect_equal`|
+
+???
+
+Besides introducing the MSToolkit package itself, I also want to explain what I have done in the internship. I chose three main jobs here. The first one is I converting the unit test cases by the testthat package. In the older version, the package used the RUnit framework to test the function. In the process of updating the package, the testthat framework was applied to replace the older framework. For example, we used expect_error in the testthat to replace the checkException in the RUnit. 
+
+---
+## My main jobs in developing the `MSToolkit` package
+
+### 2. Creating the vignette of MSToolkit package
+
+The vignette is designed for helping users understand the main features of the package and how to use the package. It mainly focuses on those two important functions - `generatedData` and `analyzeData`.
+
+* Displays 9 examples of different models for `generateData` function.
+
+* Displays a completed process of `analyzeData` function, including the `analysisCode`, `macroCode` and `interimCode`, as well as the trial design and the data simulation process.
+
+* The guideline of troubleshooting the analysis code.
+
+You could check the whole vignette in  [here](https://jluo0015.github.io/MSToolkit/articles/MSToolkit_intro_vig.html).
+
+
+???
+
+In addition, I also created the vignette for the MSToolkit package. The vignette explains the main feature of the package, also guides users how to use the package. In order to explain the two main functions, the vignette provides 9 examples of different models for generateData function, as well as displays a completed process of analyzeData function, including the analysisCode, macroCode and interimCode, as well as the trial design and the data simulation process.
+
+---
+## My main jobs in developing the `MSToolkit` package
+
+### 3. Creating the package website by {pkgdown}
+
+A new package website was recreated by the `{pkgdown}` package to display the related information of `MSToolkit` package. There are five parts in the new package website:
+
+1. [home page](https://jluo0015.github.io/MSToolkit/) - displays the basic information of `MSToolkit`.
+
+2. [Get Started](https://jluo0015.github.io/MSToolkit/articles/MSToolkit_intro_vig.html) - contains the vignette of `MSToolkit`.
+
+3. [Reference](https://jluo0015.github.io/MSToolkit/reference/index.html) - displays all the functions.
+
+4. Articles - 4 articles
+  + [generateData](https://jluo0015.github.io/MSToolkit/articles/generate_data.html) - explains the `generateData` function. 
+  + [analyzeData](https://jluo0015.github.io/MSToolkit/articles/analyze_data.html) - explains the `analyzeData` function.
+  + [Simulation Overview](https://jluo0015.github.io/MSToolkit/articles/simulation_overview.html) - explains the clinical trial simulation theory which applied in the R package.
+  + [References](https://jluo0015.github.io/MSToolkit/articles/references.html) - contains the reference list of this R package. 
+  
+5. [Changelog](https://jluo0015.github.io/MSToolkit/news/index.html) - shows the development status of the *MSToolkit* package.
+
+
+???
+
+Furthermore, I also used the pkgdown package to create a new package website. The website contains five parts. The home page displays the basic information of MSToolkit. While the get started page contains the vignette of the package. The references page is used to display all the functions of MSToolkit. Regarding the Articles page, there are four articles which provides more details about those two main functions, as well as explains the simulation principle and also contains the reference list of the package. The last page is changelog which shows the development status of the MSToolkit package. 
+
+---
+## Conclusions
+
+* Modernising the `MSToolkit` R package by applying `{roxygen2}`, `{usethis}`, `{testthat}`, `{pkgdown}` 
+
+* It is a good opportunity to apply and practice our knowledge.
+
+* It provides a chance to learn new knowledge/applications during the development process. 
+
+
+???
+
+In conclusion, during the internship, I moderised the MSToolkit package by applying the package development tools like the roxygen2, usethis, testthat, and pkgdown. During the development of the package, it provides me an opportunity to apply and practice my knowledge. It also provides me a chance to learn new knowledge and applications, and that would improve my skills of solving the R problems, and it would be helpful for my future career.
+
+---
+
+class: center, middle
+
+# Thank you!
